@@ -45,7 +45,9 @@ function formatPhone(original) {
 }
 
 var features = source.map(function (i) {
-    var p = {};
+    var p = {
+        'amenity': 'school'
+    };
 
     if (i['School_name'])
         p['name'] = i['School_name'];
