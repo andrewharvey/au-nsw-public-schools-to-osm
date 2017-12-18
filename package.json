@@ -1,0 +1,11 @@
+{
+  "name": "au-nsw-public-schools-to-osm",
+  "version": "1.0.0",
+  "description": "Convert AU NSW Public Schools data into OpenStreetMap",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@turf/helpers": "^5.1.5",
+    "geojson2osm": "https://github.com/andrewharvey/geojson2osm.git"
+  }
+}
