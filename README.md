@@ -10,17 +10,20 @@ This will download the latest data from https://data.cese.nsw.gov.au/data/datase
 
 ## Download Schools Data from OSM
 
-Visit https://overpass-turbo.eu/s/tS9 which will run this Overpass query which returns all schools in NSW as a point.
+Visit https://overpass-turbo.eu/s/y2k which will run this Overpass query which returns all schools in NSW.
 
+    [out:json][timeout:25];
+    area["ISO3166-2"="AU-NSW"][boundary=administrative]->.searchArea;
     (
-      area["ISO3166-2"="AU-NSW"][boundary=administrative];
-      node["amenity"="school"](area);
-      way["amenity"="school"](area);
-      relation["amenity"="school"](area);
+      node["amenity"="school"](area.searchArea);
+      way["amenity"="school"](area.searchArea);
+      relation["amenity"="school"](area.searchArea);
     );
-    out center meta;
+    out body;
+    >;
+    out skel qt;
 
-Or visit [this link to download the .osm file](https://overpass-api.de/api/interpreter?data=%28%20%0A%20%20area%5B%22ISO3166-2%22%3D%22AU-NSW%22%5D%5Bboundary%3Dadministrative%5D%3B%0A%20%20node%5B%22amenity%22%3D%22school%22%5D%28area%29%3B%0A%20%20way%5B%22amenity%22%3D%22school%22%5D%28area%29%3B%0A%20%20relation%5B%22amenity%22%3D%22school%22%5D%28area%29%3B%0A%0A%29%3B%0Aout%20center%20meta%3B)
+Or visit [this link to download the .osm file](https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A25%5D%3B%0Aarea%5B%22ISO3166-2%22%3D%22AU-NSW%22%5D%5Bboundary%3Dadministrative%5D-%3E.searchArea%3B%0A%28%0A%20%20node%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20way%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20relation%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%29%3B%0Aout%20body%3B%0A%3E%3B%0Aout%20skel%20qt%3B).
 
 ## Convert NSW Public Schools Data to OSM format
 
