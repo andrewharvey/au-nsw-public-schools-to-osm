@@ -23,7 +23,7 @@ Visit https://overpass-turbo.eu/s/y2k which will run this Overpass query which r
     >;
     out skel qt;
 
-Or visit [this link to download the .osm file](https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A25%5D%3B%0Aarea%5B%22ISO3166-2%22%3D%22AU-NSW%22%5D%5Bboundary%3Dadministrative%5D-%3E.searchArea%3B%0A%28%0A%20%20node%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20way%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20relation%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%29%3B%0Aout%20body%3B%0A%3E%3B%0Aout%20skel%20qt%3B).
+Or visit [this link to download the .osm file](https://overpass-api.de/api/interpreter?data=area%5B%22ISO3166-2%22%3D%22AU-NSW%22%5D%5Bboundary%3Dadministrative%5D-%3E.searchArea%3B%0A%28%0A%20%20node%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20way%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20relation%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%29%3B%0Aout%20body%3B%0A%3E%3B%0Aout%20skel%20qt%3B).
 
 ## Convert NSW Public Schools Data to OSM format
 
