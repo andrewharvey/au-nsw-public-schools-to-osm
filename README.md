@@ -26,6 +26,8 @@ Or visit [this link to download the .osm file](https://overpass-api.de/api/inter
 
     ./index.js
 
+Or download the prebuilt cached datasets [nsw-public-schools.geojson](https://tianjara.net/data/nsw-public-schools.geojson), [nsw-public-schools.osm](https://tianjara.net/data/nsw-public-schools.osm).
+
 ## Copyright
 
 The [NSW Public Schools Master Dataset](https://data.cese.nsw.gov.au/data/dataset/nsw-public-schools-master-dataset) is licensed under CC BY 4.0 (confirmed via email) by NSW Department of Education, Centre for Education Statistics and Evaluation.
