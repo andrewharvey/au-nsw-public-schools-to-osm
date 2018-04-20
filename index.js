@@ -130,13 +130,13 @@ var features = source.map(function (i) {
 
     if (i['School_subtype']) {
         // Year A to Year B
-        var yearsMatch = i['School_subtype'].match('Year (\d+) to Year (\d+)')
+        var yearsMatch = i['School_subtype'].match(/Year (\d+) to Year (\d+)/)
         if (yearsMatch && yearsMatch.length >= 3) {
             p['grades'] = yearsMatch[1] + '-' + yearsMatch[2];
         }
 
         // Kinder to Year A
-        var yearsMatch = i['School_subtype'].match('Kinder to Year (\d+)')
+        var yearsMatch = i['School_subtype'].match(/Kinder to Year (\d+)/)
         if (yearsMatch && yearsMatch.length >= 2) {
             p['grades'] = '0-' + yearsMatch[1];
         }
