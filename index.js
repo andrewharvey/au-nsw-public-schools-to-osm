@@ -13,6 +13,14 @@ function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function toValue(v) {
+    return v.toLowerCase().replace(/ /g, '_');
+}
+
+function ynToOSM(v) {
+    return (v === 'Y' || v === 'y') ? 'yes' : '';
+}
+
 function formatPhone(original) {
     // remove any parentheses
     var osmPhone = original
@@ -80,6 +88,15 @@ var features = source.map(function (i) {
     if (i['School_code'])
         p['ref:au.gov.nsw.cese'] = i['School_code'];
 
+    if (i['AgeID'])
+        p['ref:au.gov'] = i['AgeID'];
+
+    if (i['Intensive_english_centre'] === 'Y')
+        p['school:service:native_language_support'] = 'yes';
+
+    if (i['Distance_education'] === 'C')
+        p['school:service:distance_education'] = 'yes';
+
     if (i['Student_number'] && isNumeric(i['Student_number']))
         p['capacity'] = Math.floor(i['Student_number']).toString();
 
@@ -126,7 +143,7 @@ var features = source.map(function (i) {
     }
 
     if (i['School_specialty_type'] && i['School_specialty_type'] != "Other") {
-        p['description'] = i['School_specialty_type'];
+        p['school:specialty'] = toValue(i['School_specialty_type']);
     }
 
     if (i['Selective_school']) {
