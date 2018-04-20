@@ -33,6 +33,8 @@ function formatPhone(original) {
                 return '';
 
             osmPhone = '+61 ' + areaMatch[1] + ' ' + areaMatch[2] + ' ' + areaMatch[3];
+        } else if (/^1300/.test(osmPhone)) {
+            osmPhone = '+61 ' + osmPhone;
         } else {
             // local NSW already
             var localMatch = osmPhone.match(/(\d{4})(\d{4})/);
