@@ -10,7 +10,7 @@ This will download the latest data from https://data.cese.nsw.gov.au/data/datase
 
 ## Download Schools Data from OSM
 
-Visit https://overpass-turbo.eu/s/y2k which will run this Overpass query which returns all schools in NSW.
+Visit https://overpass-turbo.eu/s/y3y which will run this Overpass query which returns all schools in NSW.
 
     [out:json][timeout:25];
     area["ISO3166-2"="AU-NSW"][boundary=administrative]->.searchArea;
@@ -19,11 +19,11 @@ Visit https://overpass-turbo.eu/s/y2k which will run this Overpass query which r
       way["amenity"="school"](area.searchArea);
       relation["amenity"="school"](area.searchArea);
     );
-    out body;
+    out meta;
     >;
     out skel qt;
 
-Or visit [this link to download the .osm file](https://overpass-api.de/api/interpreter?data=area%5B%22ISO3166-2%22%3D%22AU-NSW%22%5D%5Bboundary%3Dadministrative%5D-%3E.searchArea%3B%0A%28%0A%20%20node%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20way%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%20%20relation%5B%22amenity%22%3D%22school%22%5D%28area.searchArea%29%3B%0A%29%3B%0Aout%20body%3B%0A%3E%3B%0Aout%20skel%20qt%3B).
+You can Export to GeoJSON from Overpass Turbo, or in JOSM under Download Data > Download from Overpass API, paste in the above query to download directly to JOSM.
 
 ## Convert NSW Public Schools Data to OSM format
 
