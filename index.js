@@ -29,6 +29,9 @@ function formatPhone(original) {
         // if starts with a state prefix 0X, remove the leading 0 and use that area code
         var areaMatch = osmPhone.match(/^0(\d)(\d{4})(\d{4})/);
         if (areaMatch) {
+            if (areaMatch[2] === '0000' && areaMatch[3] === '0000')
+                return '';
+
             osmPhone = '+61 ' + areaMatch[1] + ' ' + areaMatch[2] + ' ' + areaMatch[3];
         } else {
             // local NSW already
