@@ -167,7 +167,10 @@ var features = source.map(function (i) {
     p['source'] = 'NSW CESE Public Schools Master Dataset';
     p['source:url'] = 'https://data.cese.nsw.gov.au/data/dataset/nsw-public-schools-master-dataset';
 
-    return turf.point([i['Longitude'], i['Latitude']], p);
+    if (!isNumeric(i['Longitude']) || !isNumeric(i['Longitude'])) {
+        console.log(i);
+    }
+    return turf.point([Number(i['Longitude']), Number(i['Latitude'])], p);
 });
 
 var geojson = turf.featureCollection(features);
