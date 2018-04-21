@@ -15,10 +15,8 @@ const _ = require('lodash');
 const turf = {
     featureEach: require('@turf/meta').featureEach,
     featureCollection: require('@turf/helpers').featureCollection,
-    bbox: require('@turf/bbox').default
+    centroid: require('@turf/centroid').default
 };
-const rbush = require('rbush');
-const knn = require('rbush-knn');
 const kdbush = require('kdbush');
 const geokdbush = require('geokdbush');
 const whichPolygon = require('which-polygon');
@@ -70,18 +68,15 @@ const aPointsIndex = kdbush(a.features.filter((feature) => {
 const aPolygonsIndex = whichPolygon(a);
 
 // index of LineStrings and Polygons in A for k nearest neigbour queries
-const aPolygonsKnnIndex = rbush().load(a.features.filter((feature) => {
+// using centroid until something like https://github.com/mourner/rbush-knn/issues/6
+// allows for geographic point to bbox queries
+const aNearbyPolygonsIndex= kdbush(a.features.filter((feature) => {
     return feature.geometry && feature.geometry.type !== 'Point';
 }).map((feature) => {
-    const bbox = turf.bbox(feature);
-    return {
-        minX: bbox[0],
-        minY: bbox[1],
-        maxX: bbox[2],
-        maxY: bbox[3],
-        id: feature.id
-    };
-}));
+    return turf.centroid(feature);
+}),
+    (feature) => { return feature.geometry.coordinates[0]; },
+    (feature) => { return feature.geometry.coordinates[1]; });
 
 /* B -> A
  * {
@@ -115,7 +110,7 @@ turf.featureEach(b, (bFeature) => {
             matches[bFeature.id].to.push(aFeaturesByID[insidePolygon.id]);
         });
     } else {
-        const nearestPolygons = knn(aPolygonsKnnIndex, bLng, bLat, 1, null, tolerance / 1000);
+        const nearestPolygons = geokdbush.around(aNearbyPolygonsIndex, bLng, bLat, 1, tolerance / 1000);
         if (nearestPolygons && nearestPolygons.length) {
             const nearestPolygon = nearestPolygons[0];
 
