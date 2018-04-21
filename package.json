@@ -5,7 +5,17 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@turf/helpers": "^5.1.5",
-    "geojson2osm": "https://github.com/andrewharvey/geojson2osm.git"
+    "@turf/bbox": "^6.0.1",
+    "@turf/helpers": "^6.1.3",
+    "@turf/meta": "^6.0.1",
+    "geojson2osm": "https://github.com/andrewharvey/geojson2osm.git",
+    "geokdbush": "^1.1.0",
+    "kdbush": "^1.0.1",
+    "lodash": "^4.17.5",
+    "minimist": "^1.2.0",
+    "osmtogeojson": "^3.0.0-beta.3",
+    "rbush": "^2.0.2",
+    "rbush-knn": "^2.1.0",
+    "which-polygon": "https://github.com/mapbox/which-polygon.git#include_id"
   }
 }
