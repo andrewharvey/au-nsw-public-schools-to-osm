@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title>Display map navigation controls</title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.js'></script>
+    <link href='https://api.tiles.mapbox.com/mapbox-gl-js/v0.44.2/mapbox-gl.css' rel='stylesheet' />
+    <script src='https://unpkg.com/lodash@4.17.5/lodash.min.js'></script>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+
+        tr:nth-child(odd) {
+            background-color: #eee
+        }
+        tr:nth-child(even) {
+            background-color: #ddd;
+        }
+
+        .modify {
+            background-color: orange;
+        }
+        .add {
+            background-color: lightgreen;
+        }
+
+        .legend {
+            background-color: #fff;
+            border-radius: 3px;
+            bottom: 30px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.10);
+            font: 12px/20px 'Helvetica Neue', Arial, Helvetica, sans-serif;
+            padding: 10px;
+            position: absolute;
+            right: 10px;
+            z-index: 1;
+        }
+
+        .legend div span {
+            border-radius: 50%;
+            display: inline-block;
+            height: 20px;
+            margin-right: 5px;
+            width: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div id='map'></div>
+<div class='legend'>
+    <div><span style='background-color: green;'></span>New</div>
+    <div><span style='background-color: #c4ff00;'></span>Modify (new tags only)</div>
+    <div><span style='background-color: #ffda07;'></span>Modify (change source only)</div>
+    <div><span style='background-color: #ff9317;'></span>Modify (change tags)</div>
+</div>
+<script>
+mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kcmV3aGFydmV5NCIsImEiOiJQUGlGbmRRIn0.QXGAIfNhyVBmLvz0BwAhRg';
+var map = new mapboxgl.Map({
+    container: 'map',
+    style: {
+        "version": 8,
+        "sources": {
+            "osm": {
+                "type": "raster",
+                "tiles": ["https://a.tile.openstreetmap.org/{z}/{x}/{y}.png"],
+                "maxzoom": 19,
+                "tileSize": 256,
+                "attribution": "&copy; <a href=\"https://www.openstreetmap.org/copyright\">OpenStreetMap contributors</a>"
+            }
+        },
+        "layers": [{
+            "id": "osm",
+            "type": "raster",
+            "source": "osm",
+            "minzoom": 0,
+            "maxzoom": 22
+        }]
+    },
+    center: [149.95, -33.16],
+    zoom: 5,
+    hash: true,
+    pitchWithRotate: false,
+    dragRotate: false
+});
+
+map.addControl(new mapboxgl.NavigationControl( { showCompass: false } ));
+
+map.on('load', function () {
+    map.addSource('matches', {
+        type: 'geojson',
+        data: 'matches.geojson'
+    });
+    map.addLayer({
+        id: 'match-polygons',
+        type: 'fill',
+        source: 'matches',
+        paint: {
+            'fill-color': [
+                'match',
+                ['get', '_change'], 
+                'new_tags_only', '#c4ff00',
+                [
+                    'match',
+                    ['get', '_operation'],
+                    'insert', 'green',
+                    'modify_from', 'yellow',
+                    'modify_to', 'orange',
+                    'black'
+                ]
+            ],
+            'fill-opacity': 0.5
+        },
+        filter: ['==', '$type', 'Polygon']
+    });
+    map.addLayer({
+        id: 'match-points',
+        type: 'circle',
+        source: 'matches',
+        paint: {
+            'circle-radius': {
+                stops: [
+                    [12, 5],
+                    [20, 20]
+                ]
+            },
+            'circle-color': [
+                'match',
+                ['get', '_operation'],
+                'insert', 'green',
+                'modify_from', 'yellow',
+                'modify_to', 'orange',
+                'black'
+            ],
+            'circle-stroke-width': 1,
+            'circle-stroke-color': 'white'
+        },
+        filter: ['==', '$type', 'Point']
+    });
+
+    map.on('click', 'match-points', selectFeature);
+    map.on('click', 'match-polygons', selectFeature);
+
+    map.on('mouseenter', 'match-points', hoverOn);
+    map.on('mouseleave', 'match-points', hoverOff);
+    map.on('mouseenter', 'match-polygons', hoverOn);
+    map.on('mouseleave', 'match-polygons', hoverOff);
+});
+
+function hoverOff() {
+    map.getCanvas().style.cursor = '';
+}
+
+function hoverOn() {
+    map.getCanvas().style.cursor = 'pointer';
+}
+
+function selectFeature(e) {
+    var coordinates = e.features[0].geometry.type === 'Point' ? e.features[0].geometry.coordinates.slice() : e.lngLat;
+
+    var from = {};
+    var to = {};
+
+    if (e.features[0].properties._operation === 'modify_from') {
+        from = e.features[0].properties;
+        to = map.querySourceFeatures('matches', { filter: ['all', ['==', '_operation', 'modify_to'], ['==', 'id', from._link]] })[0].properties;
+    } else if (e.features[0].properties._operation === 'modify_to') {
+        to = e.features[0].properties;
+        from = map.querySourceFeatures('matches', { filter: ['all', ['==', '_operation', 'modify_from'], ['==', '$id', Number(to._link)]] })[0].properties;
+    } else if (e.features[0].properties._operation === 'insert') {
+        from = e.features[0].properties;
+    } else if (e.features[0].properties._operation === 'delete') {
+        to = e.features[0].properties;
+    }
+
+    var table = document.createElement('table');
+    var tr = document.createElement('tr');
+    var th0 = document.createElement('th');
+    var th1 = document.createElement('th');
+    th1.textContent = 'New';
+    var th2 = document.createElement('th');
+    th2.textContent = 'Existing';
+    tr.appendChild(th0);
+    tr.appendChild(th1);
+    tr.appendChild(th2);
+    table.appendChild(tr);
+
+    from = _.cloneDeep(from);
+    to = _.cloneDeep(to);
+
+    _.without(_.uniq(_.concat(Object.keys(from), Object.keys(to))), 'id', '_link', '_operation').map(function (key) {
+        var tr = document.createElement('tr');
+        var td0 = document.createElement('td');
+        td0.textContent = key;
+        tr.appendChild(td0);
+
+        var td1 = document.createElement('td');
+        td1.textContent = from[key];
+
+        var td2 = document.createElement('td');
+        td2.textContent = to[key];
+        if (from[key] !== to[key]) {
+            // different
+            if (from[key] && to[key]) {
+                td1.classList.add('modify');
+                td2.classList.add('modify');
+            } else if (from[key]) {
+                td1.classList.add('add');
+            }
+        }
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+
+        table.appendChild(tr);
+    });
+    new mapboxgl.Popup()
+        .setLngLat(coordinates)
+        .setDOMContent(table)
+        .addTo(map);
+}
+
+/*
+map.on('moveend', function() {
+    map.setZoom(Math.round(map.getZoom()));
+});
+*/
+</script>
+
+</body>
+</html>
