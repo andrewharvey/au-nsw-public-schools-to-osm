@@ -73,17 +73,21 @@ const aPolygonsIndex = whichPolygon(a);
 const aNearbyPolygonsIndex= kdbush(a.features.filter((feature) => {
     return feature.geometry && feature.geometry.type !== 'Point';
 }).map((feature) => {
-    return turf.centroid(feature);
+    var centroid = turf.centroid(feature, feature.properties);
+    centroid.id = feature.id;
+    return centroid;
 }),
     (feature) => { return feature.geometry.coordinates[0]; },
     (feature) => { return feature.geometry.coordinates[1]; });
 
 /* B -> A
  * {
- *   b.id: { from: b, to: [As] }
+ *   b.id: [A.id's],
+ *   ...
  * }
  * */
 var matches = {};
+b.features.map((feature) => { matches[feature.id] = []; });
 
 // for each point in B...
 turf.featureEach(b, (bFeature) => {
@@ -93,35 +97,32 @@ turf.featureEach(b, (bFeature) => {
     // find nearest point from A
     const nearbyPoints = geokdbush.around(aPointsIndex, bLng, bLat, 1, tolerance / 1000);
     if (nearbyPoints.length) {
+        // found a nearby Point
         const nearbyPoint = nearbyPoints[0];
-        if (!matches[bFeature.id]) {
-            matches[bFeature.id] = { from: bFeature, to: [] };
-        }
-        matches[bFeature.id].to.push(nearbyPoint);
+        console.log('nearbyPoint', nearbyPoint);
+        matches[bFeature.id].push(nearbyPoint.id);
     }
 
     // find polygons from A which B is within
     const insidePolygons = aPolygonsIndex([bLng, bLat], true);
     if (insidePolygons && insidePolygons.length) {
-        if (!matches[bFeature.id]) {
-            matches[bFeature.id] = { from: bFeature, to: [] };
-        }
+        // found a Polygon B is within
         insidePolygons.forEach((insidePolygon) => {
-            matches[bFeature.id].to.push(aFeaturesByID[insidePolygon.id]);
+            console.log('insidePolygon', insidePolygon);
+            matches[bFeature.id].push(insidePolygon.id);
         });
     } else {
         const nearestPolygons = geokdbush.around(aNearbyPolygonsIndex, bLng, bLat, 1, tolerance / 1000);
         if (nearestPolygons && nearestPolygons.length) {
+            // found a nearby Polygon
             const nearestPolygon = nearestPolygons[0];
-
-            if (!matches[bFeature.id]) {
-                matches[bFeature.id] = { from: bFeature, to: [] };
-            }
-
-            matches[bFeature.id].to.push(aFeaturesByID[nearestPolygon.id]);
+            console.log('nearestPolygon', nearestPolygon);
+            matches[bFeature.id].push(nearestPolygon.id);
         }
     }
 });
+
+fs.writeFileSync(matchesFilepath, JSON.stringify(matches, null, 2));
 
 const unmatchedFromA = a.features.filter(
     (feature) => {
@@ -145,16 +146,10 @@ const unmatchedFromA = a.features.filter(
 );
 const unmatchedFromB = b.features.filter((feature) => { return !(feature.id in matches); });
 
-
 console.log(`Total features from A (OSM): ${a.features.length} (${a.features.length - unmatchedFromA.length} matched, ${unmatchedFromA.length} unmatched)`);
 console.log(`Total features from B (Upstream): ${b.features.length} (${Object.keys(matches).length} matched, ${unmatchedFromB.length} unmatched)`);
 
-// include unmatched from B in matches
-unmatchedFromB.map((feature) => {
-    matches[feature.id] = { from: feature, to: null };
-});
 
-fs.writeFileSync(matchesFilepath, JSON.stringify(matches, null, 2));
 
 fs.writeFileSync('missingInOSM.geojson', JSON.stringify(turf.featureCollection(unmatchedFromA), null, 2));
 fs.writeFileSync('missingInSource.geojson', JSON.stringify(turf.featureCollection(unmatchedFromB), null, 2));

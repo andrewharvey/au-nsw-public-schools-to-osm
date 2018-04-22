@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8' />
+    <title></title>
+    <meta name='viewport' content='initial-scale=1,maximum-scale=1,user-scalable=no' />
+    <script src='https://unpkg.com/lodash@4.17.5/lodash.min.js'></script>
+    <script src='https://unpkg.com/d3-fetch@1.1.0/dist/d3-fetch.min.js'></script>
+    <script src='https://npmcdn.com/@turf/turf/turf.min.js'></script>
+    <script src='querystring.js'></script>
+    <style>
+        body { margin:0; padding:0; }
+        #map { position:absolute; top:0; bottom:0; width:100%; }
+
+        tr:nth-child(odd) {
+            background-color: #eee
+        }
+        tr:nth-child(even) {
+            background-color: #ddd;
+        }
+
+        .modify {
+            background-color: orange;
+        }
+        .add {
+            background-color: lightgreen;
+        }
+        .row {
+            margin: 10px;
+            border-width: 1px;
+            border-color: black;
+            border-style: solid;
+        }
+    </style>
+</head>
+<body>
+    <div id="content"></div>
+<script>
+    Promise.all([
+        d3.json('matches.json'),
+        d3.json('osm-schools.geojson'),
+        d3.json('nsw-public-schools.geojson')
+    ])
+    .then(([matches, osm, upstream]) => {
+        // ensure osm features have an ID
+        osm.features = osm.features.map((feature, index) => {
+            if (!feature.id)
+                feature.id = index;
+            return feature;
+        });
+        // ensure upstream features have an ID
+        upstream.features = upstream.features.map((feature, index) => {
+            if (!feature.id)
+                feature.id = index;
+            return feature;
+        });
+
+        const osmFeatures = {};
+        turf.featureEach(osm, (feature) => {
+            osmFeatures[feature.id] = feature;
+        });
+
+        const upstreamFeatures = {};
+        turf.featureEach(upstream, (feature) => {
+            upstreamFeatures[feature.id] = feature;
+        });
+
+        console.log(matches);
+        Object.keys(matches).map((key, index) => {
+            // for each match
+            var title = index;
+
+            var table = document.createElement('table');
+
+            var modifyTags = [];
+            Object.keys(upstreamFeatures[key].properties).map((tag) => {
+                var tr = document.createElement('tr');
+
+                var td = document.createElement('td');
+                td.textContent = tag;
+                tr.appendChild(td);
+                
+                var td0 = document.createElement('td');
+                var upstreamValue = upstreamFeatures[key].properties[tag];
+                td0.textContent = upstreamValue;
+                tr.appendChild(td0);
+
+
+                matches[key].map((match) => {
+                    var td = document.createElement('td');
+                    var osmValue = osmFeatures[match].properties[tag];
+                    td.textContent = osmValue;
+
+                    if (upstreamValue !== osmValue) {
+                        if (upstreamValue && osmValue) {
+                            td0.classList.add('modify');
+                            td.classList.add('modify');
+                            modifyTags.push(tag);
+                        } else if (upstreamValue) {
+                            td0.classList.add('add');
+                        }
+                    }
+
+                    tr.appendChild(td);
+                });
+                table.appendChild(tr);
+            });
+
+            if (matches[key].length === 0) {
+                // new feature not found in OSM
+                title += ': No Match';
+            } else if (matches[key].length === 1) {
+                // matched to exactly 1 OSM object
+                title += ': Single Match';
+            } else {
+                // multiple matches to OSM
+                title += ': Multiple Match';
+            };
+            var uniqModifyTags = _.uniq(modifyTags);
+            if (uniqModifyTags.length === 0) {
+                title += ', insert only';
+            } else {
+                title += ', modify';
+                if (_.without(uniqModifyTags, 'source').length === 0) {
+                    title += ' (source only)';
+                }
+            }
+
+
+            var row = document.createElement('div');
+            row.classList.add('row');
+            var h2 = document.createElement('h2');
+            h2.textContent = title;
+            row.appendChild(h2);
+
+            var editInID = document.createElement('a');
+
+            var params = {
+                source: 'NSW CESE Public Schools Master Dataset',
+                'source:url': 'https://data.cese.nsw.gov.au/data/dataset/nsw-public-schools-master-dataset',
+                comment: 'importing NSW Public Schools data',
+                'import:url': 'https://github.com/andrewharvey/au-nsw-public-schools-to-osm'
+            };
+            if (matches[key].length === 1) {
+                params.id = idid(matches[key][0]);
+            } else {
+                params.lon = upstreamFeatures[key].geometry.coordinates[0];
+                params.lat = upstreamFeatures[key].geometry.coordinates[1];
+                params.zoom = 15;
+            }
+            editInID.setAttribute('href', 'http://www.openstreetmap.org/edit?editor=id#' + querystring.stringify(params));
+            editInID.textContent = 'Edit in iD';
+
+            row.appendChild(editInID);
+
+            row.appendChild(table);
+            document.getElementById('content').appendChild(row);
+        });
+    });
+
+function idid(id) {
+    var parts = id.split('/');
+    return parts[0].charAt(0) + parts[1];
+}
+</script>
+</body>
+</html>

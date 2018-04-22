@@ -99,16 +99,11 @@ map.on('load', function () {
         paint: {
             'fill-color': [
                 'match',
-                ['get', '_change'], 
-                'new_tags_only', '#c4ff00',
-                [
-                    'match',
-                    ['get', '_operation'],
-                    'insert', 'green',
-                    'modify_from', 'yellow',
-                    'modify_to', 'orange',
-                    'black'
-                ]
+                ['get', '_operation'],
+                'insert', 'green',
+                'modify_from', 'yellow',
+                'modify_to', 'orange',
+                'black'
             ],
             'fill-opacity': 0.5
         },
