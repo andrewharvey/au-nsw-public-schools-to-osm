@@ -123,18 +123,88 @@ turf.featureEach(b, (bFeature) => {
     }
 });
 
-const unmatchedFromA = a.features.filter((feature) => { return !(feature.id in _.flatten(Object.values(matches)).map((object) => { return object.id; })) });
+const unmatchedFromA = a.features.filter(
+    (feature) => {
+        return !(
+            _.flatten(
+                Object.values(matches)
+                .map(
+                    (object) => {
+                        return object.to;
+                    }
+                )
+            )
+            .map(
+                (object) => {
+                    return (object && object.id) || null;
+                }
+            )
+            .includes(feature.id)
+        );
+    }
+);
 const unmatchedFromB = b.features.filter((feature) => { return !(feature.id in matches); });
 
-console.log(`Total features from A: ${a.features.length}`);
-console.log(`Total features from B: ${b.features.length}`);
-console.log(`Total features matched from A: ${a.features.length - unmatchedFromA.length}`);
-console.log(`Total features matched from B: ${Object.keys(matches).length}`);
-console.log(`Features from A not found in B: ${unmatchedFromA.length}`);
-console.log(`Features from B not found in A: ${unmatchedFromB.length}`);
 
+console.log(`Total features from A (OSM): ${a.features.length} (${a.features.length - unmatchedFromA.length} matched, ${unmatchedFromA.length} unmatched)`);
+console.log(`Total features from B (Upstream): ${b.features.length} (${Object.keys(matches).length} matched, ${unmatchedFromB.length} unmatched)`);
+
+// include unmatched from B in matches
+unmatchedFromB.map((feature) => {
+    matches[feature.id] = { from: feature, to: null };
+});
 
 fs.writeFileSync(matchesFilepath, JSON.stringify(matches, null, 2));
 
-fs.writeFileSync('aNotinB.geojson', JSON.stringify(turf.featureCollection(unmatchedFromA), null, 2));
-fs.writeFileSync('bNotinA.geojson', JSON.stringify(turf.featureCollection(unmatchedFromB), null, 2));
+fs.writeFileSync('missingInOSM.geojson', JSON.stringify(turf.featureCollection(unmatchedFromA), null, 2));
+fs.writeFileSync('missingInSource.geojson', JSON.stringify(turf.featureCollection(unmatchedFromB), null, 2));
+
+const matchesGeoJSON = turf.featureCollection(_.flatten(Object.values(matches).map((match) => {
+    if (!match.to) {
+        match.from.properties['_operation'] = 'insert';
+        return [match.from];
+    } else {
+        var features = [];
+        match.from.properties['_operation'] = 'modify_from';
+        match.from.properties['_link'] = match.to.filter((to) => { return to && to.id; }).map((to) => { return to.id; })[0];
+
+        match.to.filter((to) => { return !!to; }).map((to) => {
+            to.properties['_operation'] = 'modify_to';
+            to.properties['_link'] = match.from.id;
+            to.properties['_change'] = changeSignificance(match.from.properties, to.properties);
+
+            match.from.properties['_change'] = changeSignificance(match.from.properties, to.properties);
+
+            features.push(to);
+        });
+        features.push(match.from);
+        return features;
+    }
+})));
+fs.writeFileSync('matches.geojson', JSON.stringify(matchesGeoJSON, null, 2));
+
+function changeSignificance(from, to) {
+    var newTagsOnly = _.without(
+        _.uniq(
+            _.concat(
+                Object.keys(from),
+                Object.keys(to)
+            )
+        ),
+        'id', '_link', '_operation', '_change')
+    .map((key) => {
+        if (!(key in to))
+            return true;
+
+        if (to[key] == from[key]) {
+            return true;
+        } else {
+            return false;
+        }
+    })
+    .reduce((acc, cur) => {
+        return acc && cur;
+    });
+    if (newTagsOnly)
+        return 'new_tags_only';
+}
