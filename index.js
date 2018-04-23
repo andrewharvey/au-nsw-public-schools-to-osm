@@ -72,8 +72,10 @@ var features = source.map(function (i) {
     if (i['Fax'])
         p['contact:fax'] = formatPhone(i['Fax']);
 
-    if (i['School_Email'])
+    if (i['School_Email']) {
         p['contact:email'] = i['School_Email'];
+        p['website'] = 'http://www.' + i['School_Email'].split('@')[0] + 's.nsw.edu.au/';
+    }
 
     if (i['Town_suburb'])
         p['addr:city'] = i['Town_suburb'];
