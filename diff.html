@@ -42,19 +42,25 @@
         d3.json('nsw-public-schools.geojson')
     ])
     .then(([matches, osm, upstream]) => {
-        // ensure osm features have an ID
+        //var currentMatch = 1;
+        //var pageNumber = document.createElement('span');
+        //pageNumber.textContent = `${currentMatch} of ${Object.keys(matches).length}`;
+        //document.getElementById('content').appendChild(pageNumber);
+
+        // ensure osm features have an ID for indexing
         osm.features = osm.features.map((feature, index) => {
             if (!feature.id)
                 feature.id = index;
             return feature;
         });
-        // ensure upstream features have an ID
+        // ensure upstream features have an ID for indexing
         upstream.features = upstream.features.map((feature, index) => {
             if (!feature.id)
                 feature.id = index;
             return feature;
         });
 
+        // osm and upstream features indexed by ID
         const osmFeatures = {};
         turf.featureEach(osm, (feature) => {
             osmFeatures[feature.id] = feature;
@@ -65,12 +71,45 @@
             upstreamFeatures[feature.id] = feature;
         });
 
-        console.log(matches);
+        // for each match...
         Object.keys(matches).map((key, index) => {
-            // for each match
             var title = index;
 
             var table = document.createElement('table');
+
+            // table header
+            var tr = document.createElement('tr');
+
+            // tag
+            var th = document.createElement('th');
+            th.textContent = 'Tag';
+            tr.appendChild(th);
+
+            // upstream
+            var th = document.createElement('th');
+            th.textContent = 'Upstream'
+            tr.appendChild(th);
+
+            // OSM features
+            matches[key].map((match) => {
+                var th = document.createElement('th');
+
+                var a = document.createElement('a');
+                a.setAttribute('href', 'https://www.openstreetmap.org/' + match);
+                a.textContent = match;
+
+                th.appendChild(a);
+
+                // add a checkbox so users can choose which one the tags should be applied to
+                if (matches[key].length > 1) {
+                    var input = document.createElement('input');
+                    input.setAttribute('type', 'checkbox');
+                    th.appendChild(input);
+                }
+
+                tr.appendChild(th);
+            });
+            table.appendChild(tr);
 
             var modifyTags = [];
             Object.keys(upstreamFeatures[key].properties).map((tag) => {
@@ -142,7 +181,7 @@
                 'import:url': 'https://github.com/andrewharvey/au-nsw-public-schools-to-osm'
             };
             if (matches[key].length === 1) {
-                params.id = idid(matches[key][0]);
+                params.id = gid(matches[key][0]);
             } else {
                 params.lon = upstreamFeatures[key].geometry.coordinates[0];
                 params.lat = upstreamFeatures[key].geometry.coordinates[1];
@@ -153,14 +192,52 @@
 
             row.appendChild(editInID);
 
+            var editInJOSM = document.createElement('a');
+            var josmParams = {};
+            if (matches[key].length === 0) {
+                josmParams.lon = upstreamFeatures[key].geometry.coordinates[0];
+                josmParams.lat = upstreamFeatures[key].geometry.coordinates[1];
+                josmOperation = 'add_node';
+            } else if (matches[key].length === 1) {
+                josmParams.objects = gid(matches[key][0]);
+                josmParams.relation_members = 'true';
+                josmOperation = 'load_object';
+            }
+            if (matches[key].length < 2) {
+                josmParams.addtags = asTags(upstreamFeatures[key].properties);
+                editInJOSM.setAttribute('href', 'http://127.0.0.1:8111/' + josmOperation + '?' + querystring.stringify(josmParams));
+                editInJOSM.textContent = 'Edit in JOSM';
+                row.appendChild(editInJOSM);
+            }
+
             row.appendChild(table);
+
+            var addToJOSM = document.createElement('button');
+            addToJOSM.textContent = 'Add to JOSM';
+
+            addToJOSM.addEventListener('click', (e) => {
+                d3.text('http://127.0.0.1:8111/' + josmOperation + '?' + querystring.stringify(josmParams)).then((response) => {
+                    if (response.startsWith('OK')) {
+                        addToJOSM.textContent = '✔ Add to JOSM';
+                    } else {
+                        addToJOSM.textContent = '❗Add to JOSM';
+                    }
+                });
+            });
+            row.appendChild(addToJOSM);
             document.getElementById('content').appendChild(row);
         });
     });
 
-function idid(id) {
+function gid(id) {
     var parts = id.split('/');
     return parts[0].charAt(0) + parts[1];
+}
+
+function asTags(properties) {
+    return Object.keys(properties).map((property) => {
+        return property + '=' + properties[property];
+    }).join('|');
 }
 </script>
 </body>
