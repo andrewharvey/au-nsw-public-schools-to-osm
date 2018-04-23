@@ -161,11 +161,9 @@ var features = source.map(function (i) {
     }
 
     // static details
-    p['access'] = 'public';
+    p['access'] = 'private';
     p['fee'] = 'no';
     p['operator'] = 'NSW Department of Education';
-    p['source'] = 'NSW CESE Public Schools Master Dataset';
-    p['source:url'] = 'https://data.cese.nsw.gov.au/data/dataset/nsw-public-schools-master-dataset';
 
     if (!isNumeric(i['Longitude']) || !isNumeric(i['Longitude'])) {
         console.log(i);
