@@ -122,7 +122,7 @@
 
             var allTags = Object.keys(upstreamFeatures[key].properties);
             matches[key].map((match) => { allTags = allTags.concat(Object.keys(osmFeatures[match].properties)); });
-            allTags = _.without(_.uniq(allTags), 'id');
+            allTags = _.without(_.uniq(allTags), 'id', 'type');
             allTags.map((tag) => {
                 var tr = document.createElement('tr');
 
