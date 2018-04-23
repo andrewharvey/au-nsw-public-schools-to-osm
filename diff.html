@@ -119,7 +119,11 @@
             table.appendChild(tr);
 
             var modifyTags = [];
-            Object.keys(upstreamFeatures[key].properties).map((tag) => {
+
+            var allTags = Object.keys(upstreamFeatures[key].properties);
+            matches[key].map((match) => { allTags = allTags.concat(Object.keys(osmFeatures[match].properties)); });
+            allTags = _.without(_.uniq(allTags), 'id');
+            allTags.map((tag) => {
                 var tr = document.createElement('tr');
 
                 var td = document.createElement('td');
@@ -127,8 +131,10 @@
                 tr.appendChild(td);
                 
                 var td0 = document.createElement('td');
-                var upstreamValue = upstreamFeatures[key].properties[tag];
-                td0.textContent = upstreamValue;
+                if (tag in upstreamFeatures[key].properties) {
+                    var upstreamValue = upstreamFeatures[key].properties[tag];
+                    td0.textContent = upstreamValue;
+                }
                 tr.appendChild(td0);
 
 
