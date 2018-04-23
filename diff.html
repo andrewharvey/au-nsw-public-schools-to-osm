@@ -31,6 +31,13 @@
             border-color: black;
             border-style: solid;
         }
+        button {
+            padding: 10px;
+            margin: 10px;
+        }
+        button.apply {
+            background-color: lightgreen;
+        }
     </style>
 </head>
 <body>
@@ -170,61 +177,64 @@
             row.classList.add('row');
             var h2 = document.createElement('h2');
             h2.textContent = title;
+            h2.setAttribute('id', index);
             row.appendChild(h2);
-
-            var editInID = document.createElement('a');
-
-            var params = {
-                source: 'NSW CESE Public Schools Master Dataset',
-                'source:url': 'https://data.cese.nsw.gov.au/data/dataset/nsw-public-schools-master-dataset',
-                comment: 'importing NSW Public Schools data',
-                'import:url': 'https://github.com/andrewharvey/au-nsw-public-schools-to-osm'
-            };
-            if (matches[key].length === 1) {
-                params.id = gid(matches[key][0]);
-            } else {
-                params.lon = upstreamFeatures[key].geometry.coordinates[0];
-                params.lat = upstreamFeatures[key].geometry.coordinates[1];
-                params.zoom = 15;
-            }
-            editInID.setAttribute('href', 'http://www.openstreetmap.org/edit?editor=id#' + querystring.stringify(params));
-            editInID.textContent = 'Edit in iD';
-
-            row.appendChild(editInID);
-
-            var editInJOSM = document.createElement('a');
-            var josmParams = {};
-            if (matches[key].length === 0) {
-                josmParams.lon = upstreamFeatures[key].geometry.coordinates[0];
-                josmParams.lat = upstreamFeatures[key].geometry.coordinates[1];
-                josmOperation = 'add_node';
-            } else if (matches[key].length === 1) {
-                josmParams.objects = gid(matches[key][0]);
-                josmParams.relation_members = 'true';
-                josmOperation = 'load_object';
-            }
-            if (matches[key].length < 2) {
-                josmParams.addtags = asTags(upstreamFeatures[key].properties);
-                editInJOSM.setAttribute('href', 'http://127.0.0.1:8111/' + josmOperation + '?' + querystring.stringify(josmParams));
-                editInJOSM.textContent = 'Edit in JOSM';
-                row.appendChild(editInJOSM);
-            }
 
             row.appendChild(table);
 
-            var addToJOSM = document.createElement('button');
-            addToJOSM.textContent = 'Add to JOSM';
+            // download all in JOSM so it can be merged manually
+            var editInJOSM = document.createElement('button');
+            editInJOSM.textContent = 'Edit in JOSM';
+            editInJOSM.addEventListener('click', (e) => {
+                var params = {
+                    addtags: asTags(upstreamFeatures[key].properties),
+                    lon: upstreamFeatures[key].geometry.coordinates[0],
+                    lat: upstreamFeatures[key].geometry.coordinates[1]
+                };
+                d3.text('http://127.0.0.1:8111/add_node?' + querystring.stringify(params)).then((response) => {});
 
-            addToJOSM.addEventListener('click', (e) => {
-                d3.text('http://127.0.0.1:8111/' + josmOperation + '?' + querystring.stringify(josmParams)).then((response) => {
+                var params = {
+                    relation_members: 'true',
+                    objects: matches[key].map(gid).join(',')
+                };
+                d3.text('http://127.0.0.1:8111/load_object?' + querystring.stringify(params)).then((response) => {});
+
+                document.getElementById(index + 1).scrollIntoView();
+
+            });
+            row.appendChild(editInJOSM);
+
+            // apply change in JOSM
+            var applyInJOSM_params = {};
+            var applyInJOSM_operation;
+            if (matches[key].length === 0) {
+                applyInJOSM_params.lon = upstreamFeatures[key].geometry.coordinates[0];
+                applyInJOSM_params.lat = upstreamFeatures[key].geometry.coordinates[1];
+                applyInJOSM_params.addtags = asTags(upstreamFeatures[key].properties);
+                applyInJOSM_operation = 'add_node';
+            } else if (matches[key].length === 1) {
+                applyInJOSM_params.objects = gid(matches[key][0]);
+                applyInJOSM_params.addtags = asTags(upstreamFeatures[key].properties);
+                applyInJOSM_params.relation_members = 'true';
+                applyInJOSM_operation = 'load_object';
+            } else if (matches[key].length > 1) {
+            }
+
+            var applyInJOSM = document.createElement('button');
+            applyInJOSM.classList.add('apply');
+            applyInJOSM.textContent = 'Apply in JOSM';
+            applyInJOSM.addEventListener('click', (e) => {
+                d3.text('http://127.0.0.1:8111/' + applyInJOSM_operation + '?' + querystring.stringify(applyInJOSM_params)).then((response) => {
                     if (response.startsWith('OK')) {
-                        addToJOSM.textContent = '✔ Add to JOSM';
+                        applyInJOSM.textContent = '✔ Apply in JOSM';
                     } else {
-                        addToJOSM.textContent = '❗Add to JOSM';
+                        applyInJOSM.textContent = '❗Apply in JOSM';
                     }
                 });
+                document.getElementById(index + 1).scrollIntoView();
             });
-            row.appendChild(addToJOSM);
+            row.appendChild(applyInJOSM);
+
             document.getElementById('content').appendChild(row);
         });
     });
