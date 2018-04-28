@@ -157,7 +157,6 @@ var features = source.map(function (i) {
     }
 
     // static details
-    p['access'] = 'private';
     p['fee'] = 'no';
     p['operator'] = 'NSW Department of Education';
 
