@@ -94,7 +94,7 @@ var features = source.map(function (i) {
         p['school:service:distance_education'] = 'yes';
 
     if (i['Student_number'] && isNumeric(i['Student_number']))
-        p['capacity'] = Math.floor(i['Student_number']).toString();
+        p['school:enrolment'] = Math.floor(i['Student_number']).toString();
 
     if (i['School_gender']) {
         switch (i['School_gender']) {
