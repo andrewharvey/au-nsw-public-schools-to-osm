@@ -87,12 +87,6 @@ var features = source.map(function (i) {
     if (i['Date_1st_teacher'])
         p['start_date'] = i['Date_1st_teacher'];
 
-    if (i['School_code'])
-        p['ref:au.gov.nsw.cese'] = i['School_code'];
-
-    if (i['AgeID'])
-        p['ref:au.gov'] = i['AgeID'];
-
     if (i['Intensive_english_centre'] === 'Y')
         p['school:service:native_language_support'] = 'yes';
 
