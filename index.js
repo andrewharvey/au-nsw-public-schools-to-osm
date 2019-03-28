@@ -159,6 +159,7 @@ var features = source.map(function (i) {
     // static details
     p['fee'] = 'no';
     p['operator'] = 'NSW Department of Education';
+    p['operator:wikidata'] = 'Q5260271';
 
     if (!isNumeric(i['Longitude']) || !isNumeric(i['Longitude'])) {
         console.log(i);
