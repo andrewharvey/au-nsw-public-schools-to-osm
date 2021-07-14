@@ -67,18 +67,18 @@ var features = source.map(function (i) {
 
     // contact details
     if (i['Phone'])
-        p['contact:phone'] = formatPhone(i['Phone']);
+        p['phone'] = formatPhone(i['Phone']);
 
     if (i['Fax'])
-        p['contact:fax'] = formatPhone(i['Fax']);
+        p['fax'] = formatPhone(i['Fax']);
 
     if (i['School_Email']) {
-        p['contact:email'] = i['School_Email'];
-        p['website'] = 'http://www.' + i['School_Email'].split('@')[0] + 's.nsw.edu.au/';
+        p['email'] = i['School_Email'];
+        p['website'] = 'https://www.' + i['School_Email'].split('@')[0] + 's.nsw.gov.au/';
     }
 
     if (i['Town_suburb'])
-        p['addr:city'] = i['Town_suburb'];
+        p['addr:suburb'] = i['Town_suburb'];
 
     if (i['Postcode'])
         p['addr:postcode'] = i['Postcode'];
@@ -93,8 +93,8 @@ var features = source.map(function (i) {
     if (i['Distance_education'] === 'C')
         p['school:service:distance_education'] = 'yes';
 
-    if (i['Student_number'] && isNumeric(i['Student_number']))
-        p['school:enrolment'] = Math.floor(i['Student_number']).toString();
+    if (i['latest_year_enrolment_FTE'] && isNumeric(i['latest_year_enrolment_FTE']))
+        p['school:enrolment'] = Math.floor(i['latest_year_enrolment_FTE']).toString();
 
     if (i['School_gender']) {
         switch (i['School_gender']) {
