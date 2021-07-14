@@ -74,7 +74,7 @@ var features = source.map(function (i) {
 
     if (i['School_Email']) {
         p['email'] = i['School_Email'];
-        p['website'] = 'https://www.' + i['School_Email'].split('@')[0] + 's.nsw.gov.au/';
+        p['website'] = 'https://' + i['School_Email'].split('@')[0] + 's.nsw.gov.au/';
     }
 
     if (i['Town_suburb'])
