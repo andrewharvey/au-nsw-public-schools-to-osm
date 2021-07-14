@@ -28,7 +28,7 @@ You can Export to GeoJSON from Overpass Turbo, or in JOSM under Download Data > 
 Or from the command line you can run:
 
     yarn install
-    make downlodOverpass
+    make downloadOverpass
 
 ## Convert NSW Public Schools Data to OSM XML
 
