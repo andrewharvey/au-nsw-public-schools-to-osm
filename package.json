@@ -11,7 +11,7 @@
     "geojson2osm": "https://github.com/andrewharvey/geojson2osm.git",
     "geokdbush": "^1.1.0",
     "kdbush": "^1.0.1",
-    "lodash": "^4.17.5",
+    "lodash": "^4.17.21",
     "minimist": "^1.2.6",
     "osmtogeojson": "^3.0.0-beta.3",
     "rbush": "^2.0.2",
